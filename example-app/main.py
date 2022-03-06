@@ -14,7 +14,8 @@ from matplotlib import pyplot as plt
 from skimage import data
 from skimage.color import rgb2gray
 from skimage.feature import corner_harris, corner_subpix, corner_peaks, hessian_matrix_det
-
+from skimage.filters import difference_of_gaussians
+import pandas as pd
 
 
 def main():
@@ -33,7 +34,7 @@ def main():
     if selected_box == 'Hessian Detector':
         Hessian_detector()
     if selected_box == 'Difference of Gaussian':
-        feature_detection()
+        DoG()
     if selected_box == 'Harris-Laplacian':
         object_detection() 
     if selected_box == 'SIFT':
@@ -116,55 +117,130 @@ def video():
  
 
 def Hessian_detector():
-    st.header("Feature Detection with Hessian")
-    
-    if st.button('See Original Image'):
-        original = Image.open('Library.jpeg')
-        st.image(original, use_column_width=True)
-    
-    image = rgb2gray(load_image("Library.jpg"))
+    #Andrew Yung
+    st.header("Feature Detection with Hessian Detector")
+    st.subheader("How it works:")
+    st.write("1. The Hessian of the image corresponds to the curvature of the image based on its pixel values.")
 
-    #dets = hessian_matrix_det(image)
-    #fig, axes = plt.subplots(ncols = 2, figsize=(20,6))
-    #axes[0].imshow(image, cmap = plt.cm.gray); axes[0].set_title("Image")
-    #axes[1].imshow(-dets, cmap = plt.cm.gray); axes[1].set_title("Hessian")
-    
-    
-    
-    
-    #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)   
-    #face_cascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
-    #faces = face_cascade.detectMultiScale(image2)
-    #print(f"{len(faces)} faces detected in the image.")
-    #for x, y, width, height in faces:
-    #    cv2.rectangle(image2, (x, y), (x + width, y + height), color=(255, 0, 0), thickness=2)
-    
-    #cv2.imwrite("faces.jpg", image2)
-    
-    #st.image(image2, use_column_width=True,clamp = True)
+    st.latex(r'''
+    H(I) = \begin{bmatrix}
+    I_{xx} & I_{xy} \\
+    I_{xy} & I_{yy}
+    \end{bmatrix}
+     ''')
+        
+    st.write("2. When we perform the eigenvalue decomposition of H(I)(x,y), the eigenvectors correspond to the direction of greatest and lowest curvature and their respective eigenvalues correspond to the magnitude of curvature")
+    st.latex(r'''
+    eig(H(I)) = \left\{
+        \begin{array}{ll}
+            \underline{e_1} , \lambda_1 \text{=> Greatest curvature}\\
+            \underline{e_2} , \lambda_2 \text{=>Lowest curvature}
+        \end{array}
+    \right.
+    ''')
+
+    st.write("3. Since we are only interested in the strength of curvature we can simply take the determinant of H to yield the overall curvature strength for all x,y coordinates")
+    st.latex(r'''
+    det(H) => \lambda_1 * \lambda_2
+    ''')
+    st.write("4. Threshold the determinant \"image\" to yield our coordinate features!")
+
+    st.subheader("Hessian Detector Demo")
+    image_file = st.file_uploader("Upload Image", type=["png","jpg","jpeg"])
+    if image_file is not None:
+        image = Image.open(image_file)
+        img = np.array(image)
+        img_rgb = img
+    else:
+        img = load_image('Banff.jpg')
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     
 
-def feature_detection():
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    x,y = img_gray.shape
+    rad = int(0.0065 * x)
+    max_dis= 10*int( 0.004 *x)
+
+    thres = st.slider('Change Threshold value',min_value = 0.01,max_value = 0.5, value=0.05)
+    min_dis = st.slider('Change Minimum Distance',min_value = 1,max_value = max_dis)
+    
+
+    #st.image(img_gray, use_column_width=True)
+    dets = hessian_matrix_det(img_gray)
+    #st.image(-dets, clamp = True, channels = 'gray')
+
+    coords_hessian = corner_peaks(hessian_matrix_det(img_gray), min_distance=min_dis, threshold_rel=thres)
+
+    st.text("Hessian Features Detected")
+    
+    HesImg = img_rgb
+    for (y,x) in coords_hessian:
+        HesImg = cv2.circle(HesImg, (x,y), radius=rad, color=(255,0,0), thickness=-1)
+    st.image(HesImg, use_column_width=True,clamp = True)
+    
+
+def sigmoid(x,s):
+    #Andrew Yung
+    if (s == 0):
+        l = len(x)
+        s = np.zeros(l)
+        hf= l//2
+        s[hf:l] = 1
+        sig = s
+    else:
+        z = np.exp(-x/s)
+        sig = 1 / (1 + z)
+    
+    return sig
+
+def DoG():
+    ## Andrew Yung
+    st.header("Difference of Gaussian Detector")
+    st.subheader("How it works:")
+    st.write("1. We take two blurred versions of the image w.r.t two sigmas")
+    sig0 = st.slider('Select a sigmas', 0.0, 10.0, (0.0, 0.0))
+    st.write("2. We subtract the two blurred images and yield a bandpass filterd image")
+    x = np.arange(-5,5,0.01, dtype = float)
+    s0 = sigmoid(x,0)
+    s1 = sigmoid(x,sig0[0])
+    s2 = sigmoid(x,sig0[1])
+    s3 = s2-s1
+    s = np.stack((s0,s1,s2,s3),axis=1)
+    
+    df = pd.DataFrame(s, columns=['Edge','s1','s2',"s2-s1"])
+    st.line_chart(df)
+    st.write("3. We threshold the new image to yield our feature points/edges")
+
+    
+
     st.subheader('Difference of Gaussian in images')
-    st.write("SIFT")
-    image = load_image("tom1.jpg")
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    sift = cv2.xfeatures2d.SIFT_create()    
-    keypoints = sift.detect(gray, None)
-     
-    st.write("Number of keypoints Detected: ",len(keypoints))
-    image = cv2.drawKeypoints(image, keypoints, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    st.image(image, use_column_width=True,clamp = True)
+    image_file = st.file_uploader("Upload Image", type=["png","jpg","jpeg"])
+    if image_file is not None:
+        image = Image.open(image_file)
+        img = np.array(image)
+        img_rgb = img
+    else:
+        img = load_image('jerry.jpg')
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     
+    img_gray = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2GRAY)
     
-    st.write("FAST")
-    image_fast = load_image("tom1.jpg")
-    gray = cv2.cvtColor(image_fast, cv2.COLOR_BGR2GRAY)
-    fast = cv2.FastFeatureDetector_create()
-    keypoints = fast.detect(gray, None)
-    st.write("Number of keypoints Detected: ",len(keypoints))
-    image_  = cv2.drawKeypoints(image_fast, keypoints, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    st.image(image_, use_column_width=True,clamp = True)
+    x,_ = img_gray.shape
+    rad = int(0.007 * x)
+    max_dis= 10*int( 0.004 *x)
+
+    thres = st.slider('Change Threshold value',min_value = 0.01,max_value = 1.0)
+    min_dis = st.slider('Change Minimum Distance',min_value = 1,max_value = max_dis)
+    sig = st.slider('Select a sigmas', 0.0, 50.0, (2.0, 10.0))
+    dog = difference_of_gaussians(image=img_gray, low_sigma=sig[0], high_sigma=sig[1], channel_axis=-1)
+    norm_image = cv2.normalize(dog, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+    st.image(norm_image,use_column_width=True,clamp = True)
+    coords_dog = corner_peaks(dog, min_distance=1, threshold_rel=thres)
+
+    DogImg = img_rgb
+    for (y,x) in coords_dog:
+        DogImg = cv2.circle(DogImg, (x,y), radius=rad, color=(255,0,0), thickness=-1)
+    st.image(DogImg, use_column_width=True,clamp = True)
 
     
     
