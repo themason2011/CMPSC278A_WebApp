@@ -22,11 +22,9 @@ def main():
 
     selected_box = st.sidebar.selectbox(
     'Choose one of the following',
-    ('Welcome','Keypoints/Descriptors', 'Harris Detector', 'Hessian Detector', 'Difference of Gaussian', 'Harris-Laplacian','SIFT')
+    ('Keypoints/Descriptors', 'Harris Detector', 'Hessian Detector', 'Difference of Gaussian', 'Scale-Invariant Descriptors')
     )
     
-    if selected_box == 'Welcome':
-        welcome() 
     if selected_box == 'Keypoints/Descriptors':
         photo()
     if selected_box == 'Harris Detector':
@@ -35,10 +33,8 @@ def main():
         Hessian_detector()
     if selected_box == 'Difference of Gaussian':
         DoG()
-    if selected_box == 'Harris-Laplacian':
-        object_detection() 
-    if selected_box == 'SIFT':
-        object_detection()
+    if selected_box == 'Scale-Invariant Descriptors':
+        Scale_Invar()
  
 
 def welcome():
@@ -242,15 +238,69 @@ def DoG():
         DogImg = cv2.circle(DogImg, (x,y), radius=rad, color=(255,0,0), thickness=-1)
     st.image(DogImg, use_column_width=True,clamp = True)
 
-    
-    
-def object_detection():
-    
-    st.header('Harris-Laplacian')
-    st.subheader("Harris-Laplacian is done using different haarcascade files.")
-    img = load_image("clock.jpg")
-    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) 
-    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
+def Scale_Invar():
+    ##Mason Corey
+    st.header('Scale-Invariant Detectors')
+    st.subheader("Why do we need Scale Invariance?")
+    st.write('Common detectors, like the Harris and Hessian detectors, are often invariant to things like illumination, translation, and rotation, but not scaling.')
+    intro1 = load_image("scale_inv_intro1.png")
+    intro1_rgb = cv2.cvtColor(intro1, cv2.COLOR_BGR2RGB)
+    st.image(intro1_rgb)
+    st.text('')
+
+    st.write('Regions of different sizes will look the same in two images that only differ in scaling. How can we make a detector that will find the same keypoints independently in two images with different scale?')
+    intro2 = load_image("scale_inv_intro2.png")
+    intro2_rgb = cv2.cvtColor(intro2, cv2.COLOR_BGR2RGB)
+    st.image(intro2_rgb)
+    st.text('')
+
+    st.subheader('Naive Approach')
+    st.write('The Naive Approach is to take two images that differ only in scale, compute the Gaussian pyramid for both, and do NxN pairwise comparisons to match similar pyramids and determine the relative scale for keypoint detection.')
+    st.markdown("""
+    * Drawbacks:
+        * Very computationally expensive
+        * Requires more than one image to compare
+    """)
+    intro3 = load_image("scale_inv_intro3.png")
+    intro3_rgb = cv2.cvtColor(intro3, cv2.COLOR_BGR2RGB)
+    st.image(intro3_rgb)
+    st.text('')
+
+    st.subheader('More Robust Solution: The Laplacian Pyramid')
+    st.write('We want to generate keypoints that will be found in the same location regardless of scale and can be found independently of other images (i.e. no comparison required).')
+    st.write('To do this, we need to find a function to apply to the image that has some point which is identifiable regardless of scale, which we can set as a keypoint.')
+    st.write('The easiest function to use is one with a single maximum peak. The maximum will not change with scale, so we can use the maximum point as our keypoint.')
+    intro4 = load_image("scale_inv_intro4.png")
+    intro4_rgb = cv2.cvtColor(intro4, cv2.COLOR_BGR2RGB)
+    st.image(intro4_rgb)
+    intro5 = load_image("scale_inv_intro5.png")
+    intro5_rgb = cv2.cvtColor(intro5, cv2.COLOR_BGR2RGB)
+    st.image(intro5_rgb)
+    st.text('')
+    st.write('The most ideal function that matches these characteristics is the Laplacian Pyramid, which can be quickly approximated using the Difference of Gaussians:')
+    intro6 = load_image("scale_inv_intro6.png")
+    intro6_rgb = cv2.cvtColor(intro6, cv2.COLOR_BGR2RGB)
+    st.image(intro6_rgb, width=500)
+    st.text('')
+    st.write('You can then find the characteristic scale for each keypoint, which is the scale that produces the peak response for the Derivative of Gaussian of the image in the area of the keypoint.')
+    st.write('The characteristic scale for a given keypoint will give the best invariance to scale for that keypoint.')
+    intro7 = load_image("scale_inv_intro7.png")
+    intro7_rgb = cv2.cvtColor(intro7, cv2.COLOR_BGR2RGB)
+    st.image(intro7_rgb, width=500)
+    intro8 = load_image("scale_inv_intro8.JPG")
+    intro8_rgb = cv2.cvtColor(intro8, cv2.COLOR_BGR2RGB)
+    st.image(intro8_rgb)
+    st.text('')
+
+    st.subheader('Implementation of Scale-Invariant Detection in Industry')
+    st.markdown("""
+    * There are two common implementations of Scale-Invariant Detectors:
+        * Harris-Laplacian Detection
+        * SIFT (Scale-Invariant Feature Transformation)
+    """)
+    intro9 = load_image("scale_inv_intro9.png")
+    intro9_rgb = cv2.cvtColor(intro9, cv2.COLOR_BGR2RGB)
+    st.image(intro9_rgb)
     
     clock = cv2.CascadeClassifier('haarcascade_wallclock.xml')  
     found = clock.detectMultiScale(img_gray,  
@@ -284,9 +334,6 @@ def object_detection():
                               (x + height, y + width),  
                               (0, 255, 0), 5) 
         st.image(img_rgb_, use_column_width=True,clamp = True)
-    
-    
-    
-    
+
 if __name__ == "__main__":
     main()
