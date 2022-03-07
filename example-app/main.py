@@ -534,7 +534,7 @@ def Scale_Invar():
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     gray_large = cv2.cvtColor(img_large, cv2.COLOR_BGR2GRAY)
     
-    num_features = st.slider('Number of Features to Retain', min_value = 10, max_value = 10000, value = 500)
+    num_features = st.slider('Number of Features to Retain', min_value = 10, max_value = 10000, value = 1000)
     num_octaves = st.slider('Number of Octaves', min_value = 1, max_value = 20, value = 6)
     contrast_thresh = st.slider('Contrast Threshold for Filtering Weak Features in Low-Contrast Regions', min_value = 0.01, max_value = 0.1, value = 0.04)
     edge_thresh = st.slider('Threshold for Filtering Weak Edges', min_value = 1, max_value = 100, value = 10)
