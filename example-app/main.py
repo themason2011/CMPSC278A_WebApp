@@ -510,41 +510,24 @@ def Scale_Invar():
     intro11_rgb = cv2.cvtColor(intro11, cv2.COLOR_BGR2RGB)
     st.image(intro11_rgb)
 
-    # st.subheader('Harris-Laplacian Detector Demo')
-    # #Demo here
-    # img = cv2.imread('sift_img.jpg')
-    # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    
-    # num_octaves = st.slider('Number of Octaves', min_value = 4, max_value = 10, value = 6)
-    # corn_thresh = st.slider('Harris corner threshold', min_value = 0.005, max_value = 0.02, value = 0.01)
-    # DOG_thresh = st.slider('Threshold for DoG Scale Selection', min_value = 0.005, max_value = 0.02, value = 0.01)
-    # max_corners = st.slider('Maximum Number of Corners', min_value = 100, max_value = 10000, value = 5000)
-    # num_layers = st.slider('Number of Scales per Octave', min_value = 2, max_value = 8, value = 4)
-    # harris_lap = cv2.xfeatures2d.HarrisLaplaceFeatureDetector.create(num_octaves, corn_thresh, DOG_thresh, max_corners, num_layers)
-
-    # kp = harris_lap.detect(gray,None)
-    # img=cv2.drawKeypoints(gray,kp,img)
-    # cv2.imwrite('harris_lap_keypoints.jpg',img)
-
-    # st.image('harris_lap_keypoints.jpg')
-
     st.subheader('SIFT Demo')
     #Demo here
     img = cv2.imread('sift_img.jpg')
+    dim = (img.shape[1],img.shape[0])
 
     #Make a smaller copy
     scale_percent = 60 # percent of original size
     width = int(img.shape[1] * scale_percent / 100)
     height = int(img.shape[0] * scale_percent / 100)
-    dim = (width, height)
-    img_small = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
+    dim_small = (width, height)
+    img_small = cv2.resize(img, dim_small, interpolation = cv2.INTER_NEAREST)
 
     #Make a larger copy
     scale_percent = 140 # percent of original size
     width = int(img.shape[1] * scale_percent / 100)
     height = int(img.shape[0] * scale_percent / 100)
-    dim = (width, height)
-    img_large = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
+    dim_large = (width, height)
+    img_large = cv2.resize(img, dim_large, interpolation = cv2.INTER_NEAREST)
 
     #Make grayscale versions
     gray_small = cv2.cvtColor(img_small, cv2.COLOR_BGR2GRAY)
@@ -552,22 +535,28 @@ def Scale_Invar():
     gray_large = cv2.cvtColor(img_large, cv2.COLOR_BGR2GRAY)
     
     num_features = st.slider('Number of Features to Retain', min_value = 10, max_value = 10000, value = 500)
-    num_octaves = st.slider('Number of Octaves', min_value = 1, max_value = 10, value = 6)
+    num_octaves = st.slider('Number of Octaves', min_value = 1, max_value = 20, value = 6)
     contrast_thresh = st.slider('Contrast Threshold for Filtering Weak Features in Low-Contrast Regions', min_value = 0.01, max_value = 0.1, value = 0.04)
     edge_thresh = st.slider('Threshold for Filtering Weak Edges', min_value = 1, max_value = 100, value = 10)
     sigma = st.slider('Initial Sigma', min_value = 0.5, max_value = 5.0, value = 1.6)
     sift = cv2.SIFT_create(num_features, num_octaves, contrast_thresh, edge_thresh, sigma)
 
     kp_small = sift.detect(gray_small,None)
-    img_small = cv2.drawKeypoints(gray_small,kp_small,img_small)
+    for kp in kp_small:
+        kp.size *= .6
+    img_small = cv2.drawKeypoints(gray_small,kp_small,img_small, color=(255,0,0), flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    img_small = cv2.resize(img_small,dim,interpolation=cv2.INTER_CUBIC)
     cv2.imwrite('SIFT_keypoints_small.jpg',img_small)
 
     kp = sift.detect(gray,None)
-    img = cv2.drawKeypoints(gray,kp,img)
+    img = cv2.drawKeypoints(gray,kp,img, color=(255,0,0), flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     cv2.imwrite('SIFT_keypoints.jpg',img)
 
     kp_large = sift.detect(gray_large,None)
-    img_large = cv2.drawKeypoints(gray_large,kp_large,img_large)
+    for kp in kp_large:
+        kp.size *= 1.4
+    img_large = cv2.drawKeypoints(gray_large,kp_large,img_large, color=(255,0,0), flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    img_large = cv2.resize(img_large,dim,interpolation=cv2.INTER_CUBIC)
     cv2.imwrite('SIFT_keypoints_large.jpg',img_large)
 
     st.image('SIFT_keypoints_small.jpg')
