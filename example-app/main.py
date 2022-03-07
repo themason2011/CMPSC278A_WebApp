@@ -559,12 +559,15 @@ def Scale_Invar():
     img_large = cv2.resize(img_large,dim,interpolation=cv2.INTER_CUBIC)
     cv2.imwrite('SIFT_keypoints_large.jpg',img_large)
 
+    st.subheader("0.6x Scaled Image")
     st.image('SIFT_keypoints_small.jpg')
     st.text('')
 
+    st.subheader("Original Image")
     st.image('SIFT_keypoints.jpg')
     st.text('')
 
+    st.subheader("1.4x Scaled Image")
     st.image('SIFT_keypoints_large.jpg')
     st.text('')
 
