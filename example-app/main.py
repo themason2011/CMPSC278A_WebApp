@@ -301,39 +301,51 @@ def Scale_Invar():
     intro9 = load_image("scale_inv_intro9.png")
     intro9_rgb = cv2.cvtColor(intro9, cv2.COLOR_BGR2RGB)
     st.image(intro9_rgb)
+    st.write('Here is an example of the Laplacian Pyramid being generated with Gaussian blur being applied with a progressively-increasing sigma:')
+    intro10 = load_image("scale_inv_intro10.png")
+    intro10_rgb = cv2.cvtColor(intro10, cv2.COLOR_BGR2RGB)
+    st.image(intro10_rgb)
+    st.write('Here is the Difference of Gaussian for the first octave:')
+    intro11 = load_image("scale_inv_intro11.png")
+    intro11_rgb = cv2.cvtColor(intro11, cv2.COLOR_BGR2RGB)
+    st.image(intro11_rgb)
+
+    st.subheader('Harris-Laplacian Detector Demo')
+    #Demo here
+    img = cv2.imread('tom.jpg')
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
-    clock = cv2.CascadeClassifier('haarcascade_wallclock.xml')  
-    found = clock.detectMultiScale(img_gray,  
-                                   minSize =(20, 20)) 
-    amount_found = len(found)
-    st.text("Detecting a clock from an image")
-    if amount_found != 0:  
-        for (x, y, width, height) in found:
-     
-            cv2.rectangle(img_rgb, (x, y),  
-                          (x + height, y + width),  
-                          (0, 255, 0), 5) 
-    st.image(img_rgb, use_column_width=True,clamp = True)
+    num_octaves = st.slider('Number of Octaves', min_value = 4, max_value = 10, value = 6)
+    corn_thresh = st.slider('Harris corner threshold', min_value = 0.005, max_value = 0.02, value = 0.01)
+    DOG_thresh = st.slider('Threshold for DoG Scale Selection', min_value = 0.005, max_value = 0.02, value = 0.01)
+    max_corners = st.slider('Maximum Number of Corners', min_value = 100, max_value = 10000, value = 5000)
+    num_layers = st.slider('Number of Scales per Octave', min_value = 2, max_value = 8, value = 4)
+    # harris_lap = cv2.xfeatures2d.HarrisLaplaceFeatureDetector.create(num_octaves, corn_thresh, DOG_thresh, max_corners, num_layers)
+
+    # kp = harris_lap.detect(gray,None)
+    # img=cv2.drawKeypoints(gray,kp,img)
+    # cv2.imwrite('harris_lap_keypoints.jpg',img)
+
+    # st.image('harris_lap_keypoints.jpg')
+
+    st.subheader('SIFT Demo')
+    #Demo here
+    img = cv2.imread('tom.jpg')
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
-    
-    st.text("Detecting eyes from an image")
-    
-    image = load_image("eyes.jpg")
-    img_gray_ = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) 
-    img_rgb_ = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) 
-        
-    eye = cv2.CascadeClassifier('haarcascade_eye.xml')  
-    found = eye.detectMultiScale(img_gray_,  
-                                       minSize =(20, 20)) 
-    amount_found_ = len(found)
-        
-    if amount_found_ != 0:  
-        for (x, y, width, height) in found:
-         
-            cv2.rectangle(img_rgb_, (x, y),  
-                              (x + height, y + width),  
-                              (0, 255, 0), 5) 
-        st.image(img_rgb_, use_column_width=True,clamp = True)
+    num_features = st.slider('Number of Features to Retain', min_value = 0, max_value = 100, value = 0)
+    num_octaves = st.slider('Number of Octaves', min_value = 1, max_value = 6, value = 3)
+    contrast_thresh = st.slider('Contrast Threshold for Filtering Weak Features in Low-Contrast Regions', min_value = 0.01, max_value = 0.1, value = 0.04)
+    edge_thresh = st.slider('Threshold for Filtering Weak Edges', min_value = 1, max_value = 100, value = 10)
+    sigma = st.slider('Initial Sigma', min_value = 0.5, max_value = 5.0, value = 1.6)
+    sift = cv2.SIFT_create(num_features, num_octaves, contrast_thresh, edge_thresh, sigma)
+
+    kp = sift.detect(gray,None)
+    img=cv2.drawKeypoints(gray,kp,img)
+    cv2.imwrite('SIFT_keypoints.jpg',img)
+
+    st.image('SIFT_keypoints.jpg')
+    st.text('')
 
 if __name__ == "__main__":
     main()
