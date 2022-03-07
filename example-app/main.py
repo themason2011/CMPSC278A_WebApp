@@ -431,7 +431,7 @@ def DoG():
     dog = difference_of_gaussians(image=img_gray, low_sigma=sig[0], high_sigma=sig[1], channel_axis=-1)
     norm_image = cv2.normalize(dog, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
     st.image(norm_image,use_column_width=True,clamp = True)
-    coords_dog = corner_peaks(dog, min_distance=1, threshold_rel=thres)
+    coords_dog = corner_peaks(dog, min_distance=min_dis, threshold_rel=thres)
 
     DogImg = img_rgb
     for (y,x) in coords_dog:
